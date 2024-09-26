@@ -1,1 +1,1 @@
-# earphoneprj
+# earphoneprj live audio sample
