@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import {
-  createMeeting, createAttendee,
-  createRecording,
-  stopRecording
+  createMeeting, 
+  createAttendee,
+  //createRecording,
+  //stopRecording,
+  //postItem,
+  getMeeting,
 } from './api';
 import {
   DefaultDeviceController,
@@ -16,7 +19,7 @@ import './StartLiveSession.css';  // Importing the new CSS file for responsivene
 function StartLiveSession() {
   const [meetingSession, setMeetingSession] = useState(null);
   const [meeting, setMeeting] = useState('');
-  const [mediaPipelineId, setMediaPipelineId] = useState('');
+  //const [mediaPipelineId, setMediaPipelineId] = useState('');
   const [selectedAudioInput, setSelectedAudioInput] = useState('');
   const [audioInputDevices, setAudioInputDevices] = useState([]);
 
@@ -24,22 +27,27 @@ function StartLiveSession() {
     const meeting = await createMeeting();  // Create a new meeting
     setMeeting(meeting);
     console.log(`Meeting: ${meeting.MeetingId}`);
+    const getMeetingResult = await getMeeting(meeting.MeetingId);
+    console.log("getMeetingResult", getMeetingResult);
     const attendee = await createAttendee(meeting.MeetingId, `host-${Date.now()}`);  // Create host attendee
+    console.log(`Attendee: ${attendee.AttendeeId}`);
     initializeMeetingSession(meeting, attendee);  // Initialize host session to broadcast audio
-    startRecording(meeting.MeetingId);  // Start capture pipeline for recording
+    //startRecording(meeting.MeetingId);  // Start capture pipeline for recording
   };
 
-  const startRecording = async (meetingId) => {
-    console.log(`Recording meeting: ${meetingId}`);
-    const pipeline = await createRecording(meetingId);
-    console.log(`Recording successfully: ${pipeline.MediaPipelineId}`);
-    setMediaPipelineId(pipeline.MediaPipelineId);
-  };
+  // const startRecording = async (meetingId) => {
+  //   console.log(`Recording meeting: ${meetingId}`);
+  //   const pipeline = await createRecording(meetingId);
+  //   console.log(`Recording successfully: ${pipeline.MediaPipelineId}`);
+  //   setMediaPipelineId(pipeline.MediaPipelineId);
+  // };
 
   const stopMeeting = async () => {
+    console.log("Audio video session stopped before", meetingSession.audioVideo);
     meetingSession.audioVideo.stop();
-    const pipelineConcat = await stopRecording(mediaPipelineId);
-    console.log("Stop Recording", pipelineConcat.MediaPipelineId);
+    console.log("Audio video session stopped after", meetingSession.audioVideo);
+    // const pipelineConcat = await stopRecording(mediaPipelineId);
+    // console.log("Stop Recording", pipelineConcat.MediaPipelineId);
   };
 
   const initializeMeetingSession = (meeting, attendee) => {
@@ -53,9 +61,13 @@ function StartLiveSession() {
 
   const selectMicrophone = async (meetingSession) => {
     const audioInputDevices = await meetingSession.audioVideo.listAudioInputDevices();
+    console.log("audioInputDevices", audioInputDevices);
+    if (!audioInputDevices || audioInputDevices.length === 0) {
+      alert("No audio input devices were found. Please check your device.");
+      return;
+    }
     setAudioInputDevices(audioInputDevices);
     setSelectedAudioInput(audioInputDevices[0].deviceId);
-    console.log("audioInputDevices", audioInputDevices);
   };
 
   const startLive = async () => {
@@ -133,8 +145,9 @@ function StartLiveSession() {
               </option>
             ))}
           </select>
-          <button onClick={startLive}>Start</button>
-          <button onClick={stopMeeting}>Stop</button>
+          {selectedAudioInput && (<button onClick={startLive}>Start</button>)}
+          {selectedAudioInput && (<button onClick={stopMeeting}>Stop</button>)}
+          {/* <button onClick={stopMeeting}>Stop</button> */}
         </>
       )}
     </div>
